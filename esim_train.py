@@ -173,7 +173,6 @@ max_result=0
 best_accuracy = 0.0
 num_epochs = 10
 model.train()
-# FIXME It seems like the LSTM code has some problem
 for epoch in range(num_epochs):
 	accumulated_loss = 0
 	model.train()
@@ -192,27 +191,25 @@ for epoch in range(num_epochs):
 		train_num_correct += numpy.sum(a == b)
 		loss = criterion(output, y)
 		loss.backward()
-		# ''''''
-		# grad_norm = 0.
+		''''''
+		grad_norm = 0.
 
-		# for m in list(model.parameters()):
-		# 	grad_norm+=m.grad.data.norm() ** 2
+		for m in list(model.parameters()):
+			grad_norm+=m.grad.data.norm() ** 2
 
-		# for m in list(model.parameters()):
-		# 	if grad_norm>clip_c**2:
-		# 		try:
-		# 			m.grad.data= m.grad.data / torch.sqrt(grad_norm) * clip_c
-		# 		except:
-		# 			pass
-		# ''''''
+		for m in list(model.parameters()):
+			if grad_norm>clip_c**2:
+				try:
+					m.grad.data= m.grad.data / torch.sqrt(grad_norm) * clip_c
+				except:
+					pass
+		''''''
 		optimizer.step()
 		accumulated_loss += loss.item()
 		batch_counter += 1
-		elapsed_time = time.time() - start_time
 		if batch_counter % report_interval == 0:
 			print('--' * 20)
 			msg = '%d completed epochs, %d batches' % (epoch, batch_counter)
-			msg += '\t Time using: %ds' % (elapsed_time)
 			msg += '\t Average Loss: %f' % (accumulated_loss / train_sents_scaned)
 			msg += '\t Accuracy: %f' % (train_num_correct / train_sents_scaned)
 			print(msg)
@@ -222,13 +219,12 @@ for epoch in range(num_epochs):
 	model.eval()
 	valid_loss = 0.0
 	valid_correct_num = 0
-	start_time = time.time()
 	for x1, x2, y in tqdm(valid_dataloader):
 		x1, x1_mask, x2, x2_mask, y = prepare_data(x1, x2, y, maxlen=max_len)
 		output = model(x1, x1_mask, x2, x2_mask)
-		result = output.data.cpu().numpy()
+		result = output.numpy()
 		a = numpy.argmax(result, axis=1)
-		b = y.data.cpu().numpy()
+		b = y.numpy()
 		valid_correct_num += numpy.sum(a == b)
 		loss = criterion(output, y)
 		valid_loss += loss.item()
@@ -239,14 +235,14 @@ for epoch in range(num_epochs):
 		best_accuracy = valid_accuracy
 		print('--' * 20)
 		msg = 'Validating result:\n'
-		msg += 'Time using: %ds' % (elapsed_time)
+		msg += 'Time for this Epoch: %ds' % (elapsed_time)
 		msg += '\t Accuracy: %f' % (valid_accuracy)
 		msg += '\t Average Loss: %f' % (valid_loss / len(valid_dataloader.dataset))
 		print(msg)
 		torch.save({"epoch": epoch,
                         "model": model.state_dict(),
                         "best_score": best_accuracy,},
-                       os.path.join('./model', "best.pth.tar"))
+                       os.path.join('./model', "best.esim.tar"))
 
 # Testing the model
 print('training is done, start testing the model')

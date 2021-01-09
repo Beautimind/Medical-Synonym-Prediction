@@ -255,7 +255,7 @@ if __name__ == '__main__':
     
     # if accumulated_loss < best_dev_loss:
     if dev_acc > best_dev_acc:
-      ckpt_path = os.path.join('./results', '%s_%d.pkl' % ('synonyms_prediction', epoch))
+      ckpt_path = os.path.join('./model', '%s_%d.pkl' % ('sse', epoch))
       msg += '\t | checkpoint: ' + ckpt_path
       best_dev_acc = dev_acc
       torch.save(model.state_dict(), ckpt_path)
