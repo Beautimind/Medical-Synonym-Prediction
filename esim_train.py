@@ -123,6 +123,7 @@ def collate(data):
 
 data = pd.read_csv('./data/pairwise_data.csv')
 
+data = data[0:100]
 #build the word-id mapping
 all_words, word2id = setup_vocab(data)
 
@@ -219,26 +220,26 @@ for epoch in range(num_epochs):
 	model.eval()
 	valid_loss = 0.0
 	valid_correct_num = 0
-	for x1, x2, y in tqdm(valid_dataloader):
+	for x1, x2, y in valid_dataloader:
 		x1, x1_mask, x2, x2_mask, y = prepare_data(x1, x2, y, maxlen=max_len)
 		output = model(x1, x1_mask, x2, x2_mask)
-		result = output.numpy()
+		result = output.detach().numpy()
 		a = numpy.argmax(result, axis=1)
-		b = y.numpy()
+		b = y.detach().numpy()
 		valid_correct_num += numpy.sum(a == b)
 		loss = criterion(output, y)
 		valid_loss += loss.item()
 
 	valid_accuracy = valid_correct_num / len(valid_dataloader.dataset)
 	elapsed_time = time.time() - start_time
+	print('-' * 100)
+	msg = 'Validating result:\n'
+	msg += 'Time for this Epoch: %ds' % (elapsed_time)
+	msg += '\t Accuracy: %f' % (valid_accuracy)
+	msg += '\t Average Loss: %f' % (valid_loss / len(valid_dataloader.dataset))
+	print(msg)
 	if valid_accuracy > best_accuracy:
 		best_accuracy = valid_accuracy
-		print('--' * 20)
-		msg = 'Validating result:\n'
-		msg += 'Time for this Epoch: %ds' % (elapsed_time)
-		msg += '\t Accuracy: %f' % (valid_accuracy)
-		msg += '\t Average Loss: %f' % (valid_loss / len(valid_dataloader.dataset))
-		print(msg)
 		torch.save({"epoch": epoch,
                         "model": model.state_dict(),
                         "best_score": best_accuracy,},

@@ -120,6 +120,7 @@ if __name__ == '__main__':
         msg = 'Validating result: [Accuracy: {}] [Loss: {}]'.format(accuracy, loss)
         print(msg)
         if accuracy > best_accuracy:
+            best_accuracy = accuracy
             torch.save({"epoch": epoch,
                         "model": model.state_dict(),
                         "best_score": best_accuracy,
