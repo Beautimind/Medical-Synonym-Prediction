@@ -175,7 +175,7 @@ if __name__ == '__main__':
   print('start training...')
   best_dev_acc = 0.0
 
-  for epoch in range(10):
+  for epoch in range(3):
     batch_counter = 0
     accumulated_loss = 0
     print('--' * 20)
@@ -211,7 +211,7 @@ if __name__ == '__main__':
       batch_counter += 1
       # accumulated_loss += loss.data[0]
       accumulated_loss += loss.item()
-      if batch_counter%100 == 0:
+      if batch_counter%300 == 0:
         print('The current progress is {}/{}'.format(train_batch_i, len(train_pairs))) 
         print('loss for this batch is {}, accumulated accuracy is {}'
         .format(loss.item(),train_num_correct / train_sents_scaned ))

@@ -123,7 +123,6 @@ def collate(data):
 
 data = pd.read_csv('./data/pairwise_data.csv')
 
-data = data[0:100]
 #build the word-id mapping
 all_words, word2id = setup_vocab(data)
 
@@ -165,14 +164,14 @@ optimizer = torch.optim.Adam(model.parameters(),lr=0.0004)
 print('start training...')
 accumulated_loss=0
 batch_counter=0
-report_interval = 100
+report_interval = 300
 best_dev_loss=10e10
 best_dev_loss2=10e10
 clip_c=10
 max_len=100
 max_result=0
 best_accuracy = 0.0
-num_epochs = 10
+num_epochs = 3
 model.train()
 for epoch in range(num_epochs):
 	accumulated_loss = 0
@@ -223,9 +222,9 @@ for epoch in range(num_epochs):
 	for x1, x2, y in valid_dataloader:
 		x1, x1_mask, x2, x2_mask, y = prepare_data(x1, x2, y, maxlen=max_len)
 		output = model(x1, x1_mask, x2, x2_mask)
-		result = output.detach().numpy()
+		result = output.cpu().detach().numpy()
 		a = numpy.argmax(result, axis=1)
-		b = y.detach().numpy()
+		b = y.cpu().detach().numpy()
 		valid_correct_num += numpy.sum(a == b)
 		loss = criterion(output, y)
 		valid_loss += loss.item()
