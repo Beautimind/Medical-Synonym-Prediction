@@ -8,10 +8,10 @@ directly run the train_*.py to run the training and testing for different model.
 All the data are in the '/data' folder, and the trained models will be save to the '/model' folder
 
 ## Accuracy
-BNE with exact phrases only: 83.3%
-ESIM with exact phrases only: 97.3%
-SSE with exact phrases only: 97.8%
+BNE with exact phrases only: 83.3%<br> 
+ESIM with exact phrases only: 97.3%<br>
+SSE with exact phrases only: 97.8%<br>
 
-BNE with all phrases: 80.4%
-ESIM with all phrases: 96.5%
-SSE with all phrases: 96.6%
+BNE with all phrases: 80.4%<br>
+ESIM with all phrases: 96.5%<br>
+SSE with all phrases: 96.6%<br>
