@@ -13,6 +13,7 @@ import pickle
 from torch.autograd import Variable
 import os
 from tqdm import tqdm
+import argparse
 
 # batch preparation
 def prepare_data(seqs_x, seqs_y, labels, maxlen=None):
@@ -121,13 +122,28 @@ def collate(data):
 		label_list.append(row[2])
 	return x1_list, x2_list, label_list
 
-data = pd.read_csv('./data/pairwise_data.csv')
+parser = argparse.ArgumentParser(description="")
+parser.add_argument("--data", type=str,
+					help='Path to the data.', default='./data/pairwise_data.csv')
+parser.add_argument("--embedding", type=str, help='Path to the pretrained embedding', default='./data/embeddings.pickle')
+parser.add_argument("--epoch", type=int, help = 'training epoches', default=3) 
+parser.add_argument("--interval", type=int, help='Interval for printing stats of training', default=300)
+
+args = parser.parse_args()
+data_path = args.data
+embedding_path = args.embedding
+total_epoch = args.epoch
+print_interval = args.interval
+print('Path of data is: ', data_path)
+print('Path of embedding is: ', embedding_path)
+
+data = pd.read_csv(data_path)
 
 #build the word-id mapping
 all_words, word2id = setup_vocab(data)
 
 #build the embedding matrix
-with open('./data/embeddings.pickle', 'rb') as f_embed:
+with open(embedding_path, 'rb') as f_embed:
   word2vec = pickle.load(f_embed)
 pretrained_emb = []
 for word in all_words:
@@ -164,16 +180,14 @@ optimizer = torch.optim.Adam(model.parameters(),lr=0.0004)
 print('start training...')
 accumulated_loss=0
 batch_counter=0
-report_interval = 300
 best_dev_loss=10e10
 best_dev_loss2=10e10
 clip_c=10
 max_len=100
 max_result=0
 best_accuracy = 0.0
-num_epochs = 3
 model.train()
-for epoch in range(num_epochs):
+for epoch in range(total_epoch):
 	accumulated_loss = 0
 	model.train()
 	start_time = time.time()
@@ -207,7 +221,7 @@ for epoch in range(num_epochs):
 		optimizer.step()
 		accumulated_loss += loss.item()
 		batch_counter += 1
-		if batch_counter % report_interval == 0:
+		if batch_counter % print_interval == 0:
 			print('--' * 20)
 			msg = '%d completed epochs, %d batches' % (epoch, batch_counter)
 			msg += '\t Average Loss: %f' % (accumulated_loss / train_sents_scaned)

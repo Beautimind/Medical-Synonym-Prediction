@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader, TensorDataset
 import numpy as np
 import pandas as pd
 import os
-
+import argparse
 class ClassificationNet(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super(ClassificationNet, self).__init__()
@@ -32,8 +32,21 @@ if __name__ == '__main__':
     conat_dim = 400
     class_num = 2
 
+    parser = argparse.ArgumentParser(description="")
+    parser.add_argument("--data", type=str,
+                        help='Path to the data.', default='./data/pairwise_rawdata.csv')
+    parser.add_argument("--embedding", type=str, help='Path to the pretrained embedding', default='./data/phrases_embedding.txt')
+    parser.add_argument("--epoch", type=int, help = 'training epoches', default=3) 
+    parser.add_argument("--interval", type=int, help='Interval for printing stats of training', default=300)
+
+    args = parser.parse_args()
+    data_path = args.data
+    embedding_path = args.embedding
+    total_epoch = args.epoch
+    print_interval = args.interval
+
     # read and preprocess the data
-    with open('data/phrases_embedding.txt') as f:
+    with open(embedding_path) as f:
         lines = f.readlines()
     phrase2embed = {}
     embeddings_list = []
@@ -42,7 +55,7 @@ if __name__ == '__main__':
         vector = np.array([float(num) for num in elems[1].split()])
         phrase2embed[elems[0]] = np.fromstring(vector)
     
-    data = pd.read_csv('./data/pairwise_rawdata.csv')
+    data = pd.read_csv(data_path)
     p1_list = []
     p2_list = []
     l_list = []
@@ -55,7 +68,6 @@ if __name__ == '__main__':
     p2_mtx = np.asarray(p2_list)
     l_mtx = np.asarray(l_list)
 
-    
     embedding_dim = 200
     hidden_dim = 1600
     batch_size = 32
@@ -100,10 +112,9 @@ if __name__ == '__main__':
     train_dataset = TensorDataset(train_tensor_x, train_tensor_y)
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.00004)
-    epoch_num = 3
     best_accuracy = 0.0
 
-    for epoch in range(epoch_num):
+    for epoch in range(total_epoch):
         # Train the model What's the behavior of dataloader with suffle=True?
         batch_num = 0
         total_num = 0
@@ -113,8 +124,6 @@ if __name__ == '__main__':
         for x, y in train_dataloader:
             # train the model
             optimizer.zero_grad()
-            if not x.is_cuda:
-                print('The data tensor from dataloader is Not on cuda!')
             output = model(x)
             loss = criteria(output, y)
             loss.backward()
@@ -128,9 +137,8 @@ if __name__ == '__main__':
             batch_num = batch_num + 1
             total_loss += loss.item()
 
-            if batch_num % 300 == 0:
+            if batch_num % print_interval == 0:
                 msg = 'Batch number {}: '.format(batch_num)
-
                 msg += '[Accumulated Accuracy: {}] [Average Loss: {}]'.format(total_correct_num/total_num, total_loss/total_num)
                 print(msg)
             

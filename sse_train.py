@@ -12,7 +12,7 @@ from sse_util import *
 from datetime import datetime
 from datetime import timedelta
 from collections import Counter
-
+import argparse
 import pdb
 import pandas as pd
 
@@ -116,15 +116,30 @@ if __name__ == '__main__':
 #     else:
 #       pretrained_emb.append(np.random.uniform(-0.05, 0.05, size=[300]))
 #   pretrained_emb = np.stack(pretrained_emb)
-#   assert pretrained_emb.shape == (len(tokens), 300)  
-  
-  data = pd.read_csv('./data/pairwise_data.csv')
+#   assert pretrained_emb.shape == (len(tokens), 300) 
+  parser = argparse.ArgumentParser(description="")
+  parser.add_argument("--data", type=str,
+                        help='Path to the data.', default='./data/pairwise_data.csv')
+  parser.add_argument("--embedding", type=str, help='Path to the pretrained embedding', default='./data/embeddings.pickle')
+  parser.add_argument("--epoch", type=int, help='training epoches', default=3)
+  parser.add_argument("--interval", type=int, help='Interval for printing stats of training', default=300)
 
+  args = parser.parse_args()
+  data_path = args.data
+  embedding_path = args.embedding
+  total_epoch = args.epoch
+  print_interval = args.interval
+
+  print('Path of data is: ', data_path)
+  print('Path of embedding is: ', embedding_path)
+  
+  data = pd.read_csv(data_path)
+  
   #build the word-id mapping
   all_words, word2id = setup_vocab(data)
 
   #build the embedding matrix
-  with open('./data/embeddings.pickle', 'rb') as f_embed:
+  with open(embedding_path, 'rb') as f_embed:
     word2vec = pickle.load(f_embed)
   pretrained_emb = []
   for word in all_words:
@@ -175,7 +190,7 @@ if __name__ == '__main__':
   print('start training...')
   best_dev_acc = 0.0
 
-  for epoch in range(3):
+  for epoch in range(total_epoch):
     batch_counter = 0
     accumulated_loss = 0
     print('--' * 20)
@@ -211,7 +226,7 @@ if __name__ == '__main__':
       batch_counter += 1
       # accumulated_loss += loss.data[0]
       accumulated_loss += loss.item()
-      if batch_counter%300 == 0:
+      if batch_counter%print_interval == 0:
         print('The current progress is {}/{}'.format(train_batch_i, len(train_pairs))) 
         print('loss for this batch is {}, accumulated accuracy is {}'
         .format(loss.item(),train_num_correct / train_sents_scaned ))
@@ -255,7 +270,7 @@ if __name__ == '__main__':
     
     # if accumulated_loss < best_dev_loss:
     if dev_acc > best_dev_acc:
-      ckpt_path = os.path.join('./model', '%s_%d.pkl' % ('sse', epoch))
+      ckpt_path = os.path.join('./model', 'best.sse.pth')
       msg += '\t | checkpoint: ' + ckpt_path
       best_dev_acc = dev_acc
       torch.save(model.state_dict(), ckpt_path)
